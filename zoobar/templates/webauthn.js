@@ -20,7 +20,7 @@ function hexEncode(buf) {
 }
 
 async function fetch_json(url, options) {
-    const response = await fetch(url, options);
+    const response = await fetch(url, options);    
     const body = await response.json();
     if (body.fail)
         throw body.fail;
@@ -77,9 +77,10 @@ const didClickRegister = async (e) => {
         return console.error("Server validation of credential failed:", err);
     }
     
-    // reload the page after a successful result
-    // ADDED window.location.reload();
     alert("Succesfully registered as: " + formData.get("register_username"))
+
+    console.warn("Redirecting to: " + assertionValidationResponse.url)
+    window.location.assign(assertionValidationResponse.url);
 }
 
 /**
@@ -253,7 +254,8 @@ const postNewAssertionToServer = async (credentialDataForServer) => {
         formData.set(key, value);
     });
     
-    return await fetch_json(
+    // return await fetch_json(
+    return await fetch(
         "{{ url_for('webauthn_finish_register') }}", {
         method: "POST",
         body: formData

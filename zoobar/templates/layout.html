@@ -39,7 +39,7 @@
         <table>
           <tr><td>
              <p>
-               {% for (name, page) in {"Home": "index", "Users": "users", "Transfer": "transfer"}.iteritems() %}
+               {% for (name, page) in {"Home": "index", "Users": "users", "Transfer": "transfer"}.items() %}
                  {% if page == request.endpoint %}
                    <b>{{ name }}</b>
                  {% else %}

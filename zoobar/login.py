@@ -28,6 +28,9 @@ ORIGIN = 'https://localhost:8080'
 # placed in TRUST_ANCHOR_DIR.
 TRUST_ANCHOR_DIR = 'trusted_attestation_roots'
 
+def https_url_for(page):
+    return "https://localhost:8080" + url_for(page)
+
 class User(object):
     def __init__(self):
         self.person = None
@@ -84,7 +87,7 @@ def requirelogin(page):
     @wraps(page)
     def loginhelper(*args, **kwargs):
         if not logged_in():
-            return redirect(url_for('login') + "?nexturl=" + request.url)
+            return redirect(https_url_for('login') + "?nexturl=" + request.url.replace("http://localhost", "https://localhost:8080"))
         else:
             return page(*args, **kwargs)
     return loginhelper
@@ -152,6 +155,7 @@ def webauthn_begin_register():
 @catch_err
 def webauthn_finish_register():
     user = User()
+    cookie = None
     
     challenge = session['challenge']
     username = session['register_username']
@@ -199,18 +203,33 @@ def webauthn_finish_register():
         webauthn_credential.public_key = str(
             webauthn_credential.public_key, "utf-8")
         
-    if not user.addRegistration(ukey=ukey,
-                                username=username,
-                                password=password,
-                                display_name=display_name,
-                                pub_key=webauthn_credential.public_key,
-                                credential_id=webauthn_credential.credential_id,
-                                sign_count=webauthn_credential.sign_count,
-                                rp_id=RP_ID,
-                                icon_url='https://localhost:8080'):
+    cookie = user.addRegistration(ukey=ukey,
+                                  username=username,
+                                  password=password,
+                                  display_name=display_name,
+                                  pub_key=webauthn_credential.public_key,
+                                  credential_id=webauthn_credential.credential_id,
+                                  sign_count=webauthn_credential.sign_count,
+                                  rp_id=RP_ID,
+                                  icon_url='https://localhost:8080')
+
+    if not cookie:
         return make_response(jsonify({'fail': 'User already exists.'}), 401)
 
-    return jsonify({'success': 'User successfully registered.'})
+    nexturl = request.values.get('nexturl', https_url_for('index'))
+    response = redirect(nexturl)
+
+    # ADDED
+    log("NEXT URL!")
+    log("https://localhost:8080" + nexturl)
+    
+    ## Be careful not to include semicolons in cookie value; see
+    ## https://github.com/mitsuhiko/werkzeug/issues/226 for more
+    ## details.
+    response.set_cookie('PyZoobarLogin', cookie)
+    return response
+    
+    # ADDED return jsonify({'success': 'User successfully registered.'})
 
 @catch_err
 def login():
@@ -241,7 +260,7 @@ def login():
                 if not cookie:
                     login_error = "Invalid username or password."
 
-    nexturl = request.values.get('nexturl', url_for('index'))
+    nexturl = request.values.get('nexturl', https_url_for('index'))
     if cookie:
         response = redirect(nexturl)
         ## Be careful not to include semicolons in cookie value; see
@@ -259,6 +278,6 @@ def login():
 def logout():
     if logged_in():
         g.user.logout()
-    response = redirect(url_for('login'))
+    response = redirect(https_url_for('login'))
     response.set_cookie('PyZoobarLogin', '')
     return response
