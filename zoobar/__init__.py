@@ -21,8 +21,11 @@ app.add_url_rule("/base64_js", "base64_js", zoobarjs.base64_js, methods=['GET'])
 
 app.add_url_rule("/webauthn_begin_register", "webauthn_begin_register", login.webauthn_begin_register, methods=['POST'])
 app.add_url_rule("/webauthn_finish_register", "webauthn_finish_register", login.webauthn_finish_register, methods=['POST'])
-app.add_url_rule("/login", "login", login.login, methods=['GET', 'POST'])
 
+app.add_url_rule("/webauthn_begin_login", "webauthn_begin_login", login.webauthn_begin_login, methods=['POST'])
+app.add_url_rule("/webauthn_finish_login", "webauthn_finish_login", login.webauthn_finish_login, methods=['POST'])
+
+app.add_url_rule("/login", "login", login.login, methods=['GET', 'POST'])
 app.add_url_rule("/logout", "logout", login.logout)
 
 # Set the secret key for the `session` container

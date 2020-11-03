@@ -20,7 +20,20 @@ def getPerson(username):
     db = person_setup()
     person = db.query(Person).filter(Person.username == username)
     return db, person.first()
-    
+
+def getPersonByCredentialID(credential_id):
+    db = person_setup()
+    person = db.query(Person).filter(Person.credential_id == credential_id)
+    return db, person.first()
+
+def isRegistered(username):
+    _, person = getPerson(username)
+    return person is not None
+
+def credentialIDExists(credential_id):
+    _, person = getPersonByCredentialID(credential_id)
+    return person is not None
+
 def login(username, password):
     db, person = getPerson(username)
     if not person:
@@ -29,10 +42,6 @@ def login(username, password):
         return newtoken(db, person)
     else:
         return None
-
-def isRegistered(username):
-    _, person = getPerson(username)
-    return person is not None
 
 def register(ukey, username, password,
              display_name, pub_key,
@@ -57,11 +66,6 @@ def register(ukey, username, password,
     db.add(newperson)
     db.commit()
     return newtoken(db, newperson)
-
-def credentialIDExists(credential_id):
-    db = person_setup()
-    person = db.query(Person).filter(Person.credential_id == credential_id).first()
-    return person is not None
 
 def check_token(username, token):
     db, person = getPerson(username)

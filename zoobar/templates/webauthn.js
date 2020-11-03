@@ -79,8 +79,8 @@ const didClickRegister = async (e) => {
     
     alert("Succesfully registered as: " + formData.get("register_username"))
 
-    console.warn("Redirecting to: " + assertionValidationResponse.url)
-    window.location.assign(assertionValidationResponse.url);
+    console.warn("Redirecting to: " + assertionValidationResponse.nexturl)
+    window.location.assign(assertionValidationResponse.nexturl);
 }
 
 /**
@@ -90,7 +90,7 @@ const didClickRegister = async (e) => {
  */
 const getCredentialRequestOptionsFromServer = async (formData) => {
     return await fetch_json(
-        "/webauthn_begin_assertion",
+        "{{ url_for('webauthn_begin_login') }}",
         {
             method: "POST",
             body: formData
@@ -216,7 +216,10 @@ const didClickLogin = async (e) => {
         return console.error("Error when validating assertion on server:", err);
     }
 
-    window.location.reload();
+    alert("Succesfully logged in as: " + formData.get("login_username"))
+
+    console.warn("Redirecting to: " + response.nexturl)
+    window.location.assign(response.nexturl);
 };
 
 /**
@@ -232,15 +235,12 @@ const transformNewAssertionForServer = (newAssertion) => {
     const rawId = new Uint8Array(
         newAssertion.rawId);
 
-    // ADDED const registrationClientExtensions = newAssertion.getClientExtensionResults();
-
     return {
         id: newAssertion.id,
         rawId: b64enc(rawId),
         type: newAssertion.type,
         attObj: b64enc(attObj),
         clientData: b64enc(clientDataJSON),
-        // ADDED registrationClientExtensions: JSON.stringify(registrationClientExtensions)
     };
 }
 
@@ -254,8 +254,7 @@ const postNewAssertionToServer = async (credentialDataForServer) => {
         formData.set(key, value);
     });
     
-    // return await fetch_json(
-    return await fetch(
+    return await fetch_json(
         "{{ url_for('webauthn_finish_register') }}", {
         method: "POST",
         body: formData
@@ -271,7 +270,6 @@ const transformAssertionForServer = (newAssertion) => {
     const clientDataJSON = new Uint8Array(newAssertion.response.clientDataJSON);
     const rawId = new Uint8Array(newAssertion.rawId);
     const sig = new Uint8Array(newAssertion.response.signature);
-    const assertionClientExtensions = newAssertion.getClientExtensionResults();
 
     return {
         id: newAssertion.id,
@@ -280,7 +278,6 @@ const transformAssertionForServer = (newAssertion) => {
         authData: b64RawEnc(authData),
         clientData: b64RawEnc(clientDataJSON),
         signature: hexEncode(sig),
-        assertionClientExtensions: JSON.stringify(assertionClientExtensions)
     };
 };
 
@@ -293,9 +290,9 @@ const postAssertionToServer = async (assertionDataForServer) => {
     Object.entries(assertionDataForServer).forEach(([key, value]) => {
         formData.set(key, value);
     });
-    
+
     return await fetch_json(
-        "/verify_assertion", {
+        "{{ url_for('webauthn_finish_login') }}", {
         method: "POST",
         body: formData
     });

@@ -29,7 +29,7 @@ ORIGIN = 'https://localhost:8080'
 TRUST_ANCHOR_DIR = 'trusted_attestation_roots'
 
 def https_url_for(page):
-    return "https://localhost:8080" + url_for(page)
+    return ORIGIN + url_for(page)
 
 class User(object):
     def __init__(self):
@@ -94,21 +94,6 @@ def requirelogin(page):
 
 @catch_err
 def webauthn_begin_register():
-    """ ADDED
-    cookie = None
-    login_error = ""
-    user = User()
-
-    if request.method == 'POST':
-        log("ADDED Chasing my cheddar: %s" % (request.form.get('data')))
-
-    nexturl = request.values.get('nexturl', url_for('index'))
-
-    return render_template('login.html',
-                           nexturl=nexturl,
-                           login_error=login_error,
-                           login_username=Markup(request.form.get('login_username', '')))
-    """
     # MakeCredentialOptions
     username = request.form.get('register_username')
     display_name = request.form.get('register_display_name')
@@ -148,7 +133,7 @@ def webauthn_begin_register():
     
     make_credential_options = webauthn.WebAuthnMakeCredentialOptions(
         challenge, RP_NAME, RP_ID, ukey, username, display_name,
-        'https://localhost:8080', attestation='none')
+        ORIGIN, attestation='none')
     
     return jsonify(make_credential_options.registration_dict)
 
@@ -184,7 +169,8 @@ def webauthn_finish_register():
     try:
         webauthn_credential = webauthn_registration_response.verify()
     except Exception as e:
-        return jsonify({'fail': 'Registration failed. Error: {}'.format(e)})
+        return make_response(
+            jsonify({'fail': 'Registration failed. Error: {}'.format(e)}), 401)
 
     # Step 17.
     #
@@ -217,19 +203,13 @@ def webauthn_finish_register():
         return make_response(jsonify({'fail': 'User already exists.'}), 401)
 
     nexturl = request.values.get('nexturl', https_url_for('index'))
-    response = redirect(nexturl)
+    response = make_response(jsonify({'nexturl': nexturl}), 200)
 
-    # ADDED
-    log("NEXT URL!")
-    log("https://localhost:8080" + nexturl)
-    
     ## Be careful not to include semicolons in cookie value; see
     ## https://github.com/mitsuhiko/werkzeug/issues/226 for more
     ## details.
     response.set_cookie('PyZoobarLogin', cookie)
     return response
-    
-    # ADDED return jsonify({'success': 'User successfully registered.'})
 
 @catch_err
 def login():
@@ -273,6 +253,94 @@ def login():
                            nexturl=nexturl,
                            login_error=login_error,
                            login_username=Markup(request.form.get('login_username', '')))
+
+@catch_err
+def webauthn_begin_login():
+    username = request.form.get('login_username')
+    password = request.form.get('login_password')
+
+    if not util.validate_username(username):
+        return make_response(jsonify({'fail': 'Invalid username.'}), 401)
+
+    _, person = auth.getPerson(username)
+
+    if not person:
+        return make_response(jsonify({'fail': 'User does not exist.'}), 401)
+    if not person.credential_id:
+        return make_response(jsonify({'fail': 'Unknown credential ID.'}), 401)
+
+    session.pop('challenge', None)
+    session.pop('login_password', None)
+
+    challenge = util.generate_challenge(32)
+
+    # We strip the padding from the challenge stored in the session
+    # for the reasons outlined in the comment in webauthn_begin_activate.
+    session['challenge'] = challenge.rstrip('=')
+    session['login_password'] = password
+    
+    webauthn_user = webauthn.WebAuthnUser(
+        person.ukey, person.username, person.display_name, person.icon_url,
+        person.credential_id, person.pub_key, person.sign_count, person.rp_id)
+
+    webauthn_assertion_options = webauthn.WebAuthnAssertionOptions(
+        webauthn_user, challenge)
+    
+    return jsonify(webauthn_assertion_options.assertion_dict)
+
+@catch_err
+def webauthn_finish_login():
+    user = User()
+    cookie = None    
+    
+    challenge = session.get('challenge')
+    password = session.get('login_password')
+    
+    assertion_response = request.form
+    credential_id = assertion_response.get('id')
+
+    db, person = auth.getPersonByCredentialID(credential_id)
+    if not person:
+        return make_response(jsonify({'fail': 'User does not exist.'}), 401)
+
+    webauthn_user = webauthn.WebAuthnUser(
+        person.ukey, person.username, person.display_name, person.icon_url,
+        person.credential_id, person.pub_key, person.sign_count, person.rp_id)
+
+    webauthn_assertion_response = webauthn.WebAuthnAssertionResponse(
+        webauthn_user,
+        assertion_response,
+        challenge,
+        ORIGIN,
+        uv_required=False)  # User Verification
+   
+    try:
+        sign_count = webauthn_assertion_response.verify()
+    except Exception as e:
+        return make_response(jsonify({'fail': 'Assertion failed. Error: {}'.format(e)}), 401)
+    
+    # Update counter.
+    person.sign_count = sign_count
+    db.commit()
+
+    if not person.username:
+        return make_response(jsonify({'fail': 'You must supply a username to log in.'}), 401)
+    elif not password:
+        return make_response(jsonify({'fail': 'You must supply a password to log in.'}), 401)
+    else:
+        cookie = user.checkLogin(person.username, password)
+        if not cookie:
+            return make_response(jsonify({'fail': 'Invalid username or password.'}), 401)
+
+    nexturl = request.values.get('nexturl', https_url_for('index'))
+    response = make_response(jsonify({'nexturl': nexturl}), 200)
+    
+    ## Be careful not to include semicolons in cookie value; see
+    ## https://github.com/mitsuhiko/werkzeug/issues/226 for more
+    ## details.
+    response.set_cookie('PyZoobarLogin', cookie)
+    return response
+
 
 @catch_err
 def logout():
