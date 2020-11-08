@@ -16,13 +16,17 @@ def newtoken(db, person):
     db.commit()
     return person.token
 
-def getPerson(username):
-    db = person_setup()
+def getPerson(username, db=None):
+    if db is None:
+        db = person_setup()
+        
     person = db.query(Person).filter(Person.username == username)
     return db, person.first()
 
-def getPersonByCredentialID(credential_id):
-    db = person_setup()
+def getPersonByCredentialID(credential_id, db=None):
+    if db is None:
+        db = person_setup()
+    
     person = db.query(Person).filter(Person.credential_id == credential_id)
     return db, person.first()
 

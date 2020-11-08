@@ -14,7 +14,6 @@ app = Flask(__name__)
 
 app.add_url_rule("/", "index", index.index, methods=['GET', 'POST'])
 app.add_url_rule("/users", "users", users.users)
-app.add_url_rule("/transfer", "transfer", transfer.transfer, methods=['GET', 'POST'])
 app.add_url_rule("/zoobarjs", "zoobarjs", zoobarjs.zoobarjs, methods=['GET'])
 app.add_url_rule("/webauthn_js", "webauthn_js", zoobarjs.webauthn_js, methods=['GET'])
 app.add_url_rule("/base64_js", "base64_js", zoobarjs.base64_js, methods=['GET'])
@@ -25,7 +24,11 @@ app.add_url_rule("/webauthn_finish_register", "webauthn_finish_register", login.
 app.add_url_rule("/webauthn_begin_login", "webauthn_begin_login", login.webauthn_begin_login, methods=['POST'])
 app.add_url_rule("/webauthn_finish_login", "webauthn_finish_login", login.webauthn_finish_login, methods=['POST'])
 
-app.add_url_rule("/login", "login", login.login, methods=['GET', 'POST'])
+app.add_url_rule("/webauthn_begin_transfer", "webauthn_begin_transfer", transfer.webauthn_begin_transfer, methods=['POST'])
+app.add_url_rule("/webauthn_finish_transfer", "webauthn_finish_transfer", transfer.webauthn_finish_transfer, methods=['POST'])
+app.add_url_rule("/transfer_page", "transfer_page", transfer.transfer_page, methods=['GET'])
+
+app.add_url_rule("/login_page", "login_page", login.login_page, methods=['GET'])
 app.add_url_rule("/logout", "logout", login.logout)
 
 # Set the secret key for the `session` container

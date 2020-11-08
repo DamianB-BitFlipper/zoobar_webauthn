@@ -1,66 +1,18 @@
 {% extends "layout.html" %}
 {% block title %}Login{% endblock %}
 {% block main %}
-<script src="{{ url_for('base64_js') }}"></script>
-<script src="{{ url_for('webauthn_js') }}"></script>
-<script language="javascript" src="/zoobar/media/jquery-3.4.0.min.js"></script>
 <script langauge="javascript">
-  $(document).ready(function () {
-
-      // check whether current browser supports WebAuthn
-      if (!window.PublicKeyCredential) {
-          alert("Error: this browser does not support WebAuthn");
-          return;
-      }
+  var attestationListener = createAttestationListener('#login-form',
+                                                      "{{ url_for('webauthn_begin_login') }}",
+                                                      "{{ url_for('webauthn_finish_login') }}");
+  
+  document.addEventListener("DOMContentLoaded", e => {
+      document.querySelector('#register_button').addEventListener('click', registrationListener);
+      document.querySelector('#login_button').addEventListener('click', attestationListener);
   });
-
-  // function registerUser() {
-  //     username = $("#login_username").val()
-  //     if (username === "") {
-  //       alert("Please enter a username");
-  //       return;
-  //     }
-
-  //     password = $("#login_password").val()
-  //     if (password === "") {
-  //       alert("Please enter a password");
-  //       return;
-  //     }
-
-  //     $.post(
-  //         "{{ url_for('webauthn_begin_register') }}",
-  //         {'data': JSON.stringify({
-  //             username: username,
-  //         })},
-  //         function (data) {
-  //             return data
-  //         },
-  //         'json');
-  // }
 </script>
 
-
 <div id="login" class="centerpiece">
-  
-<!-- <form name="loginform" method="POST" action="{{ url_for('login') }}">
- !-- <table>
- !-- <tr>
- !--    <td>Username:</td>
- !--   <td><input type="text" name="login_username" size="20" id="login_username"
- !--              autocomplete="no" value="{{ login_username }}"></td>
- !-- </tr>
- !-- <tr>
- !--    <td>Password:</td>
- !--   <td colspan=2><input type="password" name="login_password" size="20" id="login_password"
- !--                        autocomplete="no">
- !--   <\!-- <input type="submit" name="submit_login" value="Log in">
- !--    !-- <input type="submit" name="submit_registration" value="Register"></td> -\->
- !-- </tr>
- !-- </table>
- !-- <input type="hidden" name="nexturl" value="{{ nexturl }}">
- !-- </form>
- !-- 
- !-- <button onclick="registerUser()">Click me to Register!</button>  -->
 
 <h2>Register</h2>
 <form id="register-form" name="register" method="get">
@@ -91,5 +43,4 @@
 <div class="footer warning">
 {{ login_error }}
 </div>
-<!-- <script>document.loginform.login_username.focus();</script> -->
 {% endblock %}

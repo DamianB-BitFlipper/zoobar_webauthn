@@ -5,18 +5,16 @@ import auth
 import time
 
 def transfer(sender, recipient, zoobars):
-    persondb = person_setup()
-    senderp = persondb.query(Person).get(sender)
-    recipientp = persondb.query(Person).get(recipient)
+    persondb, senderp = auth.getPerson(sender)
+    _, recipientp = auth.getPerson(sender, db=persondb)
 
-    sender_balance = senderp.zoobars - zoobars
-    recipient_balance = recipientp.zoobars + zoobars
+    senderp.zoobars -= zoobars
+    recipientp.zoobars += zoobars
 
-    if sender_balance < 0 or recipient_balance < 0:
-        raise ValueError()
-
-    senderp.zoobars = sender_balance
-    recipientp.zoobars = recipient_balance
+    # Make sure no balances went negative
+    if senderp.zoobars < 0 or recipientp.zoobars < 0:
+        raise ValueError()    
+    
     persondb.commit()
 
     transfer = Transfer()

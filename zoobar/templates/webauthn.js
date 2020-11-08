@@ -35,7 +35,7 @@ async function fetch_json(url, options) {
  * Callback after the registration form is submitted.
  * @param {Event} e 
  */
-const didClickRegister = async (e) => {
+const registrationListener = async (e) => {
     e.preventDefault();
 
     // gather the data in the form
@@ -88,9 +88,9 @@ const didClickRegister = async (e) => {
  * formData of the registration form
  * @param {FormData} formData 
  */
-const getCredentialRequestOptionsFromServer = async (formData) => {
+const getCredentialRequestOptionsFromServer = async (formData, begin_url) => {
     return await fetch_json(
-        "{{ url_for('webauthn_begin_login') }}",
+        begin_url,
         {
             method: "POST",
             body: formData
@@ -174,16 +174,16 @@ const transformCredentialCreateOptions = (credentialCreateOptionsFromServer) => 
  * Callback executed after submitting login form
  * @param {Event} e 
  */
-const didClickLogin = async (e) => {
+const attestationListenerHelper = async (form_id, begin_url, finish_url, e) => {
     e.preventDefault();
     // gather the data in the form
-    const form = document.querySelector('#login-form');
+    const form = document.querySelector(form_id);
     const formData = new FormData(form);
 
     // post the login data to the server to retrieve the PublicKeyCredentialRequestOptions
     let credentialCreateOptionsFromServer;
     try {
-        credentialRequestOptionsFromServer = await getCredentialRequestOptionsFromServer(formData);
+        credentialRequestOptionsFromServer = await getCredentialRequestOptionsFromServer(formData, begin_url);
     } catch (err) {
         return console.error("Error when getting request options from server:", err);
     }
@@ -211,16 +211,24 @@ const didClickLogin = async (e) => {
     // post the assertion to the server for verification.
     let response;
     try {
-        response = await postAssertionToServer(transformedAssertionForServer);
+        response = await postAssertionToServer(transformedAssertionForServer, finish_url);
     } catch (err) {
         return console.error("Error when validating assertion on server:", err);
     }
 
-    alert("Succesfully logged in as: " + formData.get("login_username"))
+    alert("Succesfully attestated request!");
 
-    console.warn("Redirecting to: " + response.nexturl)
+    console.warn("Redirecting to: " + response.nexturl);
     window.location.assign(response.nexturl);
 };
+
+const createAttestationListener = (form_id, begin_url, finish_url) => {
+    async function listener_fn(e) {
+        return attestationListenerHelper(form_id, begin_url, finish_url, e);
+    }
+
+    return listener_fn;
+}
 
 /**
  * Transforms the binary data in the credential into base64 strings
@@ -285,21 +293,17 @@ const transformAssertionForServer = (newAssertion) => {
  * Post the assertion to the server for validation and logging the user in. 
  * @param {Object} assertionDataForServer 
  */
-const postAssertionToServer = async (assertionDataForServer) => {
+const postAssertionToServer = async (assertionDataForServer, finish_url) => {
     const formData = new FormData();
     Object.entries(assertionDataForServer).forEach(([key, value]) => {
         formData.set(key, value);
     });
 
     return await fetch_json(
-        "{{ url_for('webauthn_finish_login') }}", {
-        method: "POST",
-        body: formData
-    });
+        finish_url,
+        {
+            method: "POST",
+            body: formData
+        }
+    );
 }
-
-
-document.addEventListener("DOMContentLoaded", e => {
-    document.querySelector('#register_button').addEventListener('click', didClickRegister);
-    document.querySelector('#login_button').addEventListener('click', didClickLogin);
-});

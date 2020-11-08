@@ -2,34 +2,28 @@ from flask import g
 from flask import redirect
 from flask import render_template
 from flask import request
-from flask import url_for
 from flask import Markup
 from flask import make_response
 from flask import jsonify
 from flask import session
 
+import webauthn
+
 from functools import wraps
 from debug import *
 from zoodb import *
 
-import webauthn
-
+from util import https_url_for, RP_ID, RP_NAME, ORIGIN
 import util
+
 import auth
 import bank
 import random
 import sys
 
-RP_ID = 'localhost'
-RP_NAME = 'webauthn demo localhost'
-ORIGIN = 'https://localhost:8080'
-
 # Trust anchors (trusted attestation roots) should be
 # placed in TRUST_ANCHOR_DIR.
 TRUST_ANCHOR_DIR = 'trusted_attestation_roots'
-
-def https_url_for(page):
-    return ORIGIN + url_for(page)
 
 class User(object):
     def __init__(self):
@@ -87,7 +81,7 @@ def requirelogin(page):
     @wraps(page)
     def loginhelper(*args, **kwargs):
         if not logged_in():
-            return redirect(https_url_for('login') + "?nexturl=" + request.url.replace("http://localhost", "https://localhost:8080"))
+            return redirect(https_url_for('login_page') + "?nexturl=" + request.url.replace("http://localhost", "https://localhost:8080"))
         else:
             return page(*args, **kwargs)
     return loginhelper
@@ -212,49 +206,6 @@ def webauthn_finish_register():
     return response
 
 @catch_err
-def login():
-    cookie = None
-    login_error = ""
-    user = User()
-
-    if request.method == 'POST':
-        username = request.form.get('login_username')
-        password = request.form.get('login_password')
-
-        if 'submit_registration' in request.form:
-            if not username:
-                login_error = "You must supply a username to register."
-            elif not password:
-                login_error = "You must supply a password to register."
-            else:
-                cookie = user.addRegistration(username, password)
-                if not cookie:
-                    login_error = "Registration failed."
-        elif 'submit_login' in request.form:
-            if not username:
-                login_error = "You must supply a username to log in."
-            elif not password:
-                login_error = "You must supply a password to log in."
-            else:
-                cookie = user.checkLogin(username, password)
-                if not cookie:
-                    login_error = "Invalid username or password."
-
-    nexturl = request.values.get('nexturl', https_url_for('index'))
-    if cookie:
-        response = redirect(nexturl)
-        ## Be careful not to include semicolons in cookie value; see
-        ## https://github.com/mitsuhiko/werkzeug/issues/226 for more
-        ## details.
-        response.set_cookie('PyZoobarLogin', cookie)
-        return response
-
-    return render_template('login.html',
-                           nexturl=nexturl,
-                           login_error=login_error,
-                           login_username=Markup(request.form.get('login_username', '')))
-
-@catch_err
 def webauthn_begin_login():
     username = request.form.get('login_username')
     password = request.form.get('login_password')
@@ -323,6 +274,7 @@ def webauthn_finish_login():
     person.sign_count = sign_count
     db.commit()
 
+    # TODO: Is this check not performing anything useful?
     if not person.username:
         return make_response(jsonify({'fail': 'You must supply a username to log in.'}), 401)
     elif not password:
@@ -343,9 +295,16 @@ def webauthn_finish_login():
 
 
 @catch_err
+def login_page():
+    nexturl = request.values.get('nexturl', https_url_for('index'))
+    return render_template('login.html',
+                           nexturl=nexturl,
+                           login_username=Markup(request.form.get('login_username', '')))
+
+@catch_err
 def logout():
     if logged_in():
         g.user.logout()
-    response = redirect(https_url_for('login'))
+    response = redirect(https_url_for('login_page'))
     response.set_cookie('PyZoobarLogin', '')
     return response

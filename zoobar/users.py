@@ -3,6 +3,8 @@ from flask import g, render_template, request, Markup
 from login import requirelogin
 from zoodb import *
 from debug import *
+
+import auth
 import bank
 
 @catch_err
@@ -11,8 +13,7 @@ def users():
     args = {}
     args['req_user'] = Markup(request.args.get('user', ''))
     if 'user' in request.values:
-        persondb = person_setup()
-        user = persondb.query(Person).get(request.values['user'])
+        _, user = auth.getPerson(request.values['user'])
         if user:
             p = user.profile
 

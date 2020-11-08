@@ -1,8 +1,19 @@
+from flask import url_for
+
 import random
 import six
 import string
 import os
 import base64
+
+
+RP_ID = 'localhost'
+RP_NAME = 'webauthn demo localhost'
+ORIGIN = 'https://localhost:8080'
+
+def https_url_for(page):
+    return ORIGIN + url_for(page)
+
 
 CHALLENGE_DEFAULT_BYTE_LEN = 32
 UKEY_DEFAULT_BYTE_LEN = 20
@@ -30,6 +41,21 @@ def validate_display_name(display_name):
         return False
 
     if not display_name.replace(' ', '').isalnum():
+        return False
+
+    return True
+
+def validate_transfer_amount(amount):
+    if not isinstance(amount, six.string_types):
+        return False
+
+    try:
+        amount = int(amount)
+    except ValueError:
+        # Poorly formatted integer input
+        return False
+    
+    if amount <= 0:
         return False
 
     return True

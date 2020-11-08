@@ -8,6 +8,20 @@
         </title>
     </head>
     <body>
+      <script src="{{ url_for('base64_js') }}"></script>
+      <script src="{{ url_for('webauthn_js') }}"></script>
+      <script language="javascript" src="/zoobar/media/jquery-3.4.0.min.js"></script>
+      <script langauge="javascript">
+        $(document).ready(function () {
+
+            // check whether current browser supports WebAuthn
+            if (!window.PublicKeyCredential) {
+                alert("Error: this browser does not support WebAuthn");
+                return;
+            }
+        });
+      </script>
+      
         {% if g.user and g.user.person %}
         {% set person = g.user.person %}
         {% set person_zoobars = g.user.zoobars %}
@@ -39,7 +53,7 @@
         <table>
           <tr><td>
              <p>
-               {% for (name, page) in {"Home": "index", "Users": "users", "Transfer": "transfer"}.items() %}
+               {% for (name, page) in {"Home": "index", "Users": "users", "Transfer": "transfer_page"}.items() %}
                  {% if page == request.endpoint %}
                    <b>{{ name }}</b>
                  {% else %}

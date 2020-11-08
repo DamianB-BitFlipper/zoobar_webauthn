@@ -162,7 +162,7 @@ class WebAuthnMakeCredentialOptions(object):
 
 
 class WebAuthnAssertionOptions(object):
-    def __init__(self, webauthn_user, challenge, timeout=60000, userVerification='discouraged'):
+    def __init__(self, webauthn_user, challenge, clientExtensions=None, timeout=60000, userVerification='discouraged'):
         if isinstance(webauthn_user, list):
             self.webauthn_users = webauthn_user
         else:
@@ -170,6 +170,7 @@ class WebAuthnAssertionOptions(object):
         self.challenge = challenge
         self.timeout = timeout
         self.userVerification = userVerification
+        self.clientExtensions = clientExtensions if clientExtensions else dict()
 
     @property
     def assertion_dict(self):
@@ -199,7 +200,7 @@ class WebAuthnAssertionOptions(object):
             'rpId': self.webauthn_users[0].rp_id,
             'timeout': self.timeout,
             'userVerification': self.userVerification,
-            # 'extensions': {}
+            'extensions': self.clientExtensions,
         }
 
         return assertion_dict
@@ -258,7 +259,8 @@ class WebAuthnRegistrationResponse(object):
                  none_attestation_permitted=False,
                  uv_required=False,
                  expected_registration_client_extensions=DEFAULT_CLIENT_EXTENSIONS,
-                 expected_registration_authenticator_extensions=DEFAULT_AUTHENTICATOR_EXTENSIONS):
+                 expected_registration_authenticator_extensions=DEFAULT_AUTHENTICATOR_EXTENSIONS,
+                 verify_authenticator_extensions_fn=None):
         self.rp_id = rp_id
         self.origin = origin
         self.registration_response = registration_response
@@ -269,6 +271,7 @@ class WebAuthnRegistrationResponse(object):
         self.expected_registration_client_extensions = expected_registration_client_extensions
         self.expected_registration_authenticator_extensions = \
             expected_registration_authenticator_extensions
+        self.verify_authenticator_extensions_fn = verify_authenticator_extensions_fn
 
         # With self attestation, the credential public key is
         # also used as the attestation public key.
@@ -713,10 +716,11 @@ class WebAuthnRegistrationResponse(object):
                 if not _verify_client_extensions(rce, self.expected_registration_client_extensions):
                     raise RegistrationRejectedException(
                         'Unable to verify client extensions.')
-                if not _verify_authenticator_extensions(
-                        c, self.expected_registration_authenticator_extensions):
-                    raise RegistrationRejectedException(
-                        'Unable to verify authenticator extensions.')
+            if self.verify_authenticator_extensions_fn and \
+               not self.verify_authenticator_extensions_fn(
+                    c, self.expected_registration_authenticator_extensions):
+                raise RegistrationRejectedException(
+                    'Unable to verify authenticator extensions.')
 
             # Step 13.
             #
@@ -853,7 +857,8 @@ class WebAuthnAssertionResponse(object):
                  allow_credentials=None,
                  uv_required=False,
                  expected_assertion_client_extensions=DEFAULT_CLIENT_EXTENSIONS,
-                 expected_assertion_authenticator_extensions=DEFAULT_AUTHENTICATOR_EXTENSIONS):
+                 expected_assertion_authenticator_extensions=DEFAULT_AUTHENTICATOR_EXTENSIONS,
+                 verify_authenticator_extensions_fn=None):
         self.webauthn_user = webauthn_user
         self.assertion_response = assertion_response
         self.challenge = challenge
@@ -863,6 +868,7 @@ class WebAuthnAssertionResponse(object):
         self.expected_assertion_client_extensions = expected_assertion_client_extensions
         self.expected_assertion_authenticator_extensions = \
             expected_assertion_authenticator_extensions
+        self.verify_authenticator_extensions_fn = verify_authenticator_extensions_fn
 
     def verify(self):
         try:
@@ -1029,10 +1035,11 @@ class WebAuthnAssertionResponse(object):
                 if not _verify_client_extensions(ace, self.expected_assertion_client_extensions):
                     raise AuthenticationRejectedException(
                         'Unable to verify client extensions.')
-                if not _verify_authenticator_extensions(
-                        c, self.expected_assertion_authenticator_extensions):
-                    raise AuthenticationRejectedException(
-                        'Unable to verify authenticator extensions.')
+            if self.verify_authenticator_extensions_fn and \
+               not self.verify_authenticator_extensions_fn(
+                    c, self.expected_assertion_authenticator_extensions):
+                raise AuthenticationRejectedException(
+                    'Unable to verify authenticator extensions.')
 
             # Step 15.
             #
@@ -1267,6 +1274,9 @@ def _verify_challenge(received_challenge, sent_challenge):
 
     return True
 
+def _verify_client_extensions(received_extensions, sent_extensions):
+    pass
+
 
 def _verify_origin(client_data, origin):
     if not isinstance(client_data, dict):
@@ -1311,11 +1321,6 @@ def _verify_client_extensions(client_extensions, expected_client_extensions):
             client_extensions.keys()):
         return True
     return False
-
-
-def _verify_authenticator_extensions(client_data, expected_authenticator_extensions):
-    # TODO
-    return True
 
 
 def _verify_rp_id_hash(auth_data_rp_id_hash, rp_id):
