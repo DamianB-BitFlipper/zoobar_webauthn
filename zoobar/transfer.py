@@ -41,6 +41,7 @@ def webauthn_begin_transfer():
     session.pop('challenge', None)
     session.pop('transfer_amount', None)
     session.pop('transfer_recipient', None)
+    session.pop('clientExtensions', None)
 
     challenge = util.generate_challenge(32)
 
